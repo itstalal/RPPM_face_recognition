@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from 'axios'
-import {useNavigate} from "react-router-dom"
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -10,50 +10,43 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [showWebcam, setShowWebcam] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
+  const [tempImage, setTempImage] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState("");
   const webcamRef = useRef(null);
 
   const handleRegister = async (e) => {
     e.preventDefault();
-  
-    console.log("Début de l'inscription");
-  
+
     if (!firstName || !lastName || !email || !password || !capturedImage) {
       setError("Tous les champs sont requis.");
       return;
     }
-  
+
     try {
-      console.log("Envoi des données vers le serveur");
-  
       const formData = new FormData();
       formData.append("firstName", firstName);
       formData.append("lastName", lastName);
       formData.append("email", email);
       formData.append("password", password);
-      formData.append("imageData", capturedImage);  
-  
-      const response = await axios.post('http://localhost/dashboard/server/process_register.php', 
-        formData, 
+      formData.append("imageData", capturedImage);
+
+      const response = await axios.post(
+        "http://localhost/dashboard/ia2_project/backend/process_register.php",
+        formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
-  
-      console.log("Réponse du serveur :", response);
-  
+
       if (response.data.success) {
-        console.log("Inscription réussie :", response.data.message);
-        window.location.href = "/"; 
+        window.location.href = "/";
       } else {
         setError(response.data.message);
-        console.log("Erreur d'inscription :", response.data.message);
       }
     } catch (error) {
       console.error("Erreur lors de l'inscription :", error);
       setError("Erreur serveur. Veuillez réessayer.");
     }
   };
-  
-  
 
   const handleCapture = () => {
     if (webcamRef.current) {
@@ -63,8 +56,20 @@ const Register = () => {
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      setCapturedImage(canvas.toDataURL("image/png"));
+      const image = canvas.toDataURL("image/png");
+
+      // Stocker temporaire
+      setTempImage(image);
+      setShowModal(true);
     }
+  };
+
+  const handleConfirmImage = (accept) => {
+    if (accept) {
+      setCapturedImage(tempImage);
+    }
+    setTempImage(null);
+    setShowModal(false);
   };
 
   useEffect(() => {
@@ -156,7 +161,12 @@ const Register = () => {
 
           {showWebcam && (
             <div className="mb-4">
-              <video ref={webcamRef} autoPlay playsInline className="w-full rounded-lg border border-gray-300"></video>
+              <video
+                ref={webcamRef}
+                autoPlay
+                playsInline
+                className="w-full rounded-lg border border-gray-300"
+              />
               <button
                 type="button"
                 onClick={handleCapture}
@@ -169,7 +179,11 @@ const Register = () => {
 
           {capturedImage && (
             <div className="mb-4">
-              <img src={capturedImage} alt="Captured" className="w-full rounded-lg border border-gray-300" />
+              <img
+                src={capturedImage}
+                alt="Captured"
+                className="w-full rounded-lg border border-gray-300"
+              />
             </div>
           )}
 
@@ -188,6 +202,36 @@ const Register = () => {
           <a href="/">Avez-vous déjà un compte?</a>
         </label>
       </div>
+
+      {/* Modale de confirmation */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <h3 className="text-lg font-bold mb-4 text-gray-800">
+              Confirmez-vous cette image ?
+            </h3>
+            <img
+              src={tempImage}
+              alt="Captured"
+              className="w-full rounded-lg border border-gray-300 mb-4"
+            />
+            <div className="flex justify-between">
+              <button
+                onClick={() => handleConfirmImage(true)}
+                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+              >
+                Oui
+              </button>
+              <button
+                onClick={() => handleConfirmImage(false)}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+              >
+                Non, refaire
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

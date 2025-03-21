@@ -1,5 +1,4 @@
 <?php
-// config.php
 $host = 'localhost';
 $dbname = 'projetIA2';
 $username = 'Talal123';

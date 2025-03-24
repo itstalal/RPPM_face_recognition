@@ -1,110 +1,82 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google'; // Importation de GoogleOAuthProvider et GoogleLogin
-import { jwtDecode } from 'jwt-decode'; // Correct import from jwt-decode
+import React, { useState } from "react";
+import axios from "axios";
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
+import FaceCapture from "../components/FaceCapture"; 
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [showFaceCapture, setShowFaceCapture] = useState(false); 
 
-  // Fonction de connexion normale
+  // Connexion normale
   const handleLogin = async (e) => {
     e.preventDefault();
 
     if (!email || !password) {
-      setError('Veuillez remplir tous les champs');
+      setError("Veuillez remplir tous les champs");
       return;
     }
 
     try {
-      console.log('Envoi des données...', { email, password });
       const response = await axios.post(
-        'http://localhost/dashboard/ia2_project/backend/login.php',
+        "http://localhost/dashboard/ia2_project/backend/login.php",
         { email, password },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+        { headers: { "Content-Type": "application/json" } }
       );
-      console.log('Réponse du serveur:', response.data);
 
       if (response.data.success) {
-        console.log('Connexion réussie:', response.data.user);
-        alert('Connexion réussie ');
+        alert("Connexion réussie !");
       } else {
         setError(response.data.message);
       }
     } catch (error) {
-      console.error('Erreur lors de la connexion:', error);
-      setError('Erreur serveur. Veuillez réessayer.');
+      setError("Erreur serveur. Veuillez réessayer.");
     }
   };
 
-  // Fonction pour gérer la connexion avec Google
+  // Connexion avec Google
   const handleGoogleLogin = async (response) => {
     if (response.credential) {
       try {
-        // jwtDecode for decoding user infos
-        const { credential } = response;
-        const userInfo = jwtDecode(credential);
-  
-        console.log('User Info:', userInfo);
-  
+        const userInfo = jwtDecode(response.credential);
         const res = await axios.post(
-          'http://localhost/dashboard/ia2_project/backend/google_login.php',
+          "http://localhost/dashboard/ia2_project/backend/google_login.php",
           {
             email: userInfo.email,
             name: userInfo.name,
             googleId: userInfo.sub,
-            token: credential,
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            token: response.credential,
           }
         );
-  
-        console.log('Réponse du serveur:', res.data);
-  
+
         if (res.data.success) {
-          alert('Connexion réussie via Google! ');
+          alert("Connexion réussie via Google !");
         } else {
-          setError(res.data.message || 'Erreur de connexion avec Google.');
+          setError(res.data.message || "Erreur de connexion avec Google.");
         }
       } catch (error) {
-        console.error('Erreur lors de la connexion avec Google:', error);
-        setError('Erreur serveur. Veuillez réessayer.');
+        setError("Erreur serveur. Veuillez réessayer.");
       }
     }
   };
-  
-  useEffect(() => {
-    if (window.google && window.google.accounts) {
-      window.google.accounts.id.initialize({
-        client_id: "787609373544-jl1b46fqhrrjdmio246itiqc2123e39i.apps.googleusercontent.com",
-        callback: handleGoogleLogin,
-      });
-  
-      if (!window.googlePromptShown) {
-        window.google.accounts.id.prompt();
-        window.googlePromptShown = true;
-      }
-    }
-  }, []);
-  
-  
+
+  // show FaceCapture
+  const handleFaceLogin = () => {
+    setShowFaceCapture(true);
+  };
 
   return (
     <GoogleOAuthProvider clientId="787609373544-jl1b46fqhrrjdmio246itiqc2123e39i.apps.googleusercontent.com">
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm">
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Se connecter</h2>
-  
+          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+            Se connecter
+          </h2>
+
           {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
-  
+
           <form onSubmit={handleLogin}>
             <div className="mb-4">
               <label htmlFor="email" className="block text-gray-700">
@@ -113,13 +85,13 @@ const Login = () => {
               <input
                 type="email"
                 id="email"
-                className="w-full p-3 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Entrez votre email"
+                className="w-full p-3 mt-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="Entrez votre email"
               />
             </div>
-  
+
             <div className="mb-6">
               <label htmlFor="password" className="block text-gray-700">
                 Mot de passe
@@ -127,69 +99,54 @@ const Login = () => {
               <input
                 type="password"
                 id="password"
-                className="w-full p-3 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Entrez votre mot de passe"
+                className="w-full p-3 mt-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="Entrez votre mot de passe"
               />
             </div>
-  
+
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white p-3 rounded-lg shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-800 transition duration-300 transform hover:scale-105"
+              className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition"
             >
               Se connecter
             </button>
           </form>
-  
-          <div className="text-center mt-4">
-            <a href="/" className="text-blue-500 text-sm hover:underline">
-              Mot de passe oublié ?
-            </a>
-          </div>
-  
-          <div className="text-center mt-4">
-            <p className="text-sm">
-              Pas encore de compte ?{' '}
-              <a href="/register" className="text-blue-500 hover:underline">
-                S'inscrire
-              </a>
-            </p>
-          </div>
-  
-          <div className="mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <button
-                className="w-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-800 text-white p-3 rounded-lg shadow-md hover:shadow-lg hover:from-blue-700 hover:to-blue-900 transition duration-300 transform hover:scale-105"
-              >
-                <i className="fab fa-facebook-f mr-2"></i>
-                Connexion avec Facebook
-              </button>
-            </div>
-  
-            {/* Google Sign-In Button */}
+
+          <div className="mt-6 text-center">
             <GoogleLogin
               onSuccess={handleGoogleLogin}
-              onError={() => setError('Erreur de connexion avec Google')}
-              useOneTap
+              onError={() => setError("Erreur de connexion avec Google")}
               shape="pill"
-              theme="outline"
               text="signin_with"
               size="large"
               className="w-full"
             />
-  
-            <div className="flex items-center justify-between mb-4 mt-4">
-              <button className="w-full flex items-center justify-center bg-gradient-to-r from-gray-700 to-gray-900 text-white p-3 rounded-lg shadow-md hover:shadow-lg hover:from-gray-800 hover:to-black transition duration-300 transform hover:scale-105">
-                <i className="fas fa-user-circle mr-2"></i>
-                Connexion par reconnaissance faciale
-              </button>
-            </div>
           </div>
+
+          <div className="mt-4">
+            <button
+              onClick={handleFaceLogin}
+              className="w-full bg-gray-800 text-white py-3 rounded-lg hover:bg-gray-900 transition"
+            >
+              Connexion par reconnaissance faciale
+            </button>
+          </div>
+
+          {showFaceCapture && (
+            <FaceCapture
+              onLoginSuccess={(user) => {
+                alert(`Bienvenue ${user.first_name} !`);
+                setShowFaceCapture(false);
+              }}
+              onClose={() => setShowFaceCapture(false)}
+            />
+          )}
         </div>
       </div>
     </GoogleOAuthProvider>
   );
-};  
+};
 
 export default Login;

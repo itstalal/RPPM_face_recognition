@@ -38,7 +38,7 @@ const Register = () => {
       );
 
       if (response.data.success) {
-        window.location.href = "/";
+        navigate("/")
       } else {
         setError(response.data.message);
       }
@@ -58,7 +58,6 @@ const Register = () => {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const image = canvas.toDataURL("image/png");
 
-      // Stocker temporaire
       setTempImage(image);
       setShowModal(true);
     }
@@ -199,7 +198,7 @@ const Register = () => {
         </form>
 
         <label className="text-blue-500 font-bold">
-          <a href="/">Avez-vous déjà un compte?</a>
+          <a href="/login">Avez-vous déjà un compte?</a>
         </label>
       </div>
 
